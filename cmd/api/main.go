@@ -15,7 +15,9 @@ func main() {
 	}
 	addr := env.GetInt("ADDR", 8080)
 	cfg := config{
-		addr: fmt.Sprintf(":%d", addr),
+		addr:    fmt.Sprintf(":%d", addr),
+		version: "1.0.0",
+		env:     env.GetStr("ENV", "dev"),
 		db: dbConfig{
 			addr:         env.GetStr("DB_ADDR", "postgres://admin:password@localhost/social_db?sslmode=disable"),
 			maxOpenConns: env.GetInt("DB_MAX_OPEN_CONNS", 30),

@@ -15,8 +15,10 @@ type application struct {
 }
 
 type config struct {
-	addr string
-	db   dbConfig
+	addr    string
+	env     string
+	version string
+	db      dbConfig
 }
 
 type dbConfig struct {
