@@ -1,0 +1,2 @@
+migrate create -seq -ext sql -dir ./cmd/migrate/migration add_foreign_keys_posts
+migrate -path=./cmd/migrate/migration -database="postgres://admin:password@localhost/social_db?sslmode=disable" up

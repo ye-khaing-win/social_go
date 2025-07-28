@@ -34,11 +34,28 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(middleware.StripSlashes)
 
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health", app.healthCheckHandler)
+
+		r.Route("/posts", func(r chi.Router) {
+			r.Post("/", app.createPostHandler)
+
+			//r.With(app.postsContextMiddleware).Get("/{postID}", app.getPostHandler)
+			//r.With(app.postsContextMiddleware).Patch("/{postID}", app.updatePostHandler)
+
+			r.Route("/{postID}", func(r chi.Router) {
+				r.Use(app.postsContextMiddleware)
+				r.Patch("/", app.updatePostHandler)
+				r.Get("/", app.getPostHandler)
+				r.Delete("/", app.deletePostHandler)
+
+			})
+		})
+
 	})
 
 	return r
