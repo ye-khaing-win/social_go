@@ -29,7 +29,7 @@ func readJSON(w http.ResponseWriter, r *http.Request, data any) error {
 	return dec.Decode(data)
 }
 
-func writeJSONError(w http.ResponseWriter, status int, message string) error {
+func (app *application) errorResponse(w http.ResponseWriter, status int, message string) error {
 	type envelope struct {
 		Status  string `json:"status"`
 		Message string `json:"message"`
@@ -38,5 +38,17 @@ func writeJSONError(w http.ResponseWriter, status int, message string) error {
 	return writeJSON(w, status, envelope{
 		Status:  "error",
 		Message: message,
+	})
+}
+
+func (app *application) jsonResponse(w http.ResponseWriter, status int, data any) error {
+	type envelop struct {
+		Status string `json:"status"`
+		Data   any    `json:"data"`
+	}
+
+	return writeJSON(w, status, envelop{
+		Status: "success",
+		Data:   data,
 	})
 }

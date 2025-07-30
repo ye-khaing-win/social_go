@@ -6,7 +6,9 @@ import (
 	postgres "github.com/ye-khaing-win/social_go/internal/db"
 	"github.com/ye-khaing-win/social_go/internal/env"
 	"github.com/ye-khaing-win/social_go/internal/store"
+	"go.uber.org/zap"
 	"log"
+	"time"
 )
 
 func main() {
@@ -24,7 +26,13 @@ func main() {
 			maxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 30),
 			maxIdleTime:  env.GetStr("DB_MAX_IDLE_TIME", "15m"),
 		},
+		mail: mailConfig{
+			exp: time.Hour * 24 * 3, // 3 days
+		},
 	}
+
+	logger := zap.Must(zap.NewProduction()).Sugar()
+	defer logger.Sync()
 
 	db, err := postgres.New(
 		cfg.db.addr,
@@ -33,15 +41,18 @@ func main() {
 		cfg.db.maxIdleTime,
 	)
 	if err != nil {
-		log.Panic(err)
+		logger.Fatal(err)
 	}
 	defer db.Close()
+
+	logger.Info("database connection pool established")
 
 	s := store.NewStorage(db)
 	app := &application{
 		config: cfg,
 		store:  s,
+		logger: logger,
 	}
 
-	log.Fatal(app.run(app.mount()))
+	logger.Fatal(app.run(app.mount()))
 }

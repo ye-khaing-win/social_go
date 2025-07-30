@@ -49,7 +49,7 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := writeJSON(w, http.StatusCreated, post); err != nil {
+	if err := app.jsonResponse(w, http.StatusCreated, post); err != nil {
 		app.internalServerErrorResponse(w, r, err)
 		return
 	}
@@ -59,6 +59,7 @@ func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromCtx(r)
 
 	comments, err := app.store.Comments.GetByPostID(r.Context(), post.ID)
+
 	if err != nil {
 		app.internalServerErrorResponse(w, r, err)
 		return
@@ -68,7 +69,7 @@ func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	post.Comments = comments
 
-	if err := writeJSON(w, http.StatusOK, post); err != nil {
+	if err := app.jsonResponse(w, http.StatusOK, post); err != nil {
 		app.internalServerErrorResponse(w, r, err)
 		return
 	}
@@ -76,7 +77,7 @@ func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "postID")
-	id, err := strconv.Atoi(idParam)
+	id, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
@@ -120,11 +121,17 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := app.store.Posts.Update(r.Context(), post); err != nil {
-		app.internalServerErrorResponse(w, r, err)
+		switch {
+		case errors.Is(err, store.ErrNotFound):
+			app.conflictResponse(w, r, err)
+		default:
+			app.internalServerErrorResponse(w, r, err)
+		}
+
 		return
 	}
 
-	if err := writeJSON(w, http.StatusOK, post); err != nil {
+	if err := app.jsonResponse(w, http.StatusOK, post); err != nil {
 		app.internalServerErrorResponse(w, r, err)
 		return
 	}
@@ -133,7 +140,7 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 func (app *application) postsContextMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		idParam := chi.URLParam(r, "postID")
-		id, err := strconv.Atoi(idParam)
+		id, err := strconv.ParseInt(idParam, 10, 64)
 		if err != nil {
 			app.badRequestResponse(w, r, err)
 		}

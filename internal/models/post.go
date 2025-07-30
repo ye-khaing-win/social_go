@@ -8,5 +8,12 @@ type Post struct {
 	Tags      []string   `json:"tags"`
 	CreatedAt string     `json:"created_at"`
 	UpdatedAt string     `json:"updated_at"`
+	Version   int        `json:"version"`
 	Comments  []*Comment `json:"comments"`
+	User      User       `json:"user"`
+}
+
+type PostWithMetadata struct {
+	Post
+	CommentCount int `json:"comment_count"`
 }
